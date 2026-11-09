@@ -3,27 +3,25 @@
 ## Running
 
 ```sh
-uv run pytest --cov=prompt_ab_router   # tests with coverage report
-uv run python scripts/check.py      # every gate, as CI and the factory run it
+pytest tests/test_prompt_ab_router.py
 ```
+
+The repository contains `tests/test_prompt_ab_router.py`; its compiled artifact is `tests/__pycache__/test_prompt_ab_router.cpython-312-pytest-9.2.0.pyc`.
 
 ## Policy
 
-- Branch coverage of `src/prompt_ab_router` must stay at or above 80 %; the gate fails below it.
-- Tests exercise the public API (`import prompt_ab_router`) and assert every observable effect:
-  return values, raised exceptions and their messages.
-- Each bug fix starts with a failing test that reproduces it.
-- Tests are deterministic: no network, no wall clock, no dependence on test order.
+- Tests exercise the public API by importing from `prompt_ab_router`.
+- Assertions check exact assignment results, the 1:1 distribution over `u0` to `u9999` (5042 `control`, 4958 `treatment`), error codes, frozen dataclass behavior, tuple conversion, salt effects, and invalid unit ids and names.
+- Tests use fixed ids and inputs; no network or wall-clock dependency appears in the visible test code.
 
 ## Tiers
 
-- Local tier (every gate run, coverage measured here): unit and property tests, plus conformance on small
-  fixtures kept in the repository.
-- CI tier: conformance that needs an external tool or a download. Mark them `@pytest.mark.conformance`; `scripts/check.py` deselects them locally
-  (unless `FABRICA_CI=1`). The CI `conformance` job sets `FABRICA_CI=1` and runs the full suite. Tools are installed
-  by the optional `ci/conformance-setup.sh` (bash, CI only; verify every download against a pinned SHA-256), and
-  tagged tests skip cleanly when their tool is missing.
+There is one visible test tier: the pytest module `tests/test_prompt_ab_router.py`. No conformance markers, CI-only setup scripts, or `tests/conftest.py` are present in the provided files.
 
 ## Layout
 
-`tests/test_<module>.py` mirrors each public module. Shared fixtures go in `tests/conftest.py`.
+`tests/test_prompt_ab_router.py` defines the following test classes and methods:
+
+- `TestVariant`: `test_variant_creation`, `test_variant_frozen`.
+- `TestExperiment`: `test_valid_experiment`, `test_default_salt_empty`, `test_experiment_name_invalid_characters`, `test_experiment_name_too_long`, `test_empty_variant_list`, `test_too_many_variants`, `test_duplicate_variant_names`, `test_weight_zero`, `test_weight_negative`, `test_weight_boolean_rejected`, `test_variant_name_invalid`, `test_variant_name_too_long`, `test_variants_converted_to_tuple`.
+- `TestAssign`: `test_acceptance_known_assignment`, `test_distribution_1_to_1_over_10000`, `test_acceptance_last_unit_id_u9999`, `test_invalid_unit_empty`, `test_invalid_unit_too_long`, `test_invalid_unit_not_string`, `test_salt_changes_assignment`.
